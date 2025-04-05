@@ -1,4 +1,4 @@
-import py7zr
+import zipfile
 import os
 from textSummarizer.constants import *
 from textSummarizer.utils.common import get_size
@@ -23,12 +23,15 @@ class DataIngestion:
             logger.info(f"File already exists of size: {get_size(Path(self.config.local_data_file))}")
 
     def extract_zip_file(self):
+        """
+        zip_file_path: str
+        Extracts the zip file into the data directory
+        Function returns None
+        """
         unzip_path = self.config.unzip_dir
         os.makedirs(unzip_path, exist_ok=True)
-
-        with py7zr.SevenZipFile(self.config.local_data_file, mode='r') as z:
-            z.extractall(path=unzip_path)
-            logger.info(f"Extracted 7z file to: {unzip_path}")
+        with zipfile.ZipFile(self.config.local_data_file, 'r') as zip_ref:
+            zip_ref.extractall(unzip_path)
 
 
             
