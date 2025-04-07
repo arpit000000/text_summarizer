@@ -53,10 +53,12 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
-          IMAGE_TAG: latest
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
   Continuous-Deployment:
     needs: build-and-push-ecr-image
@@ -82,13 +84,23 @@ jobs:
 
       - name: Run Docker Container
         run: |
-          docker rm -f texts || true  # Clean up if container already exists
-          docker run -d -p 8080:8080 --name=texts \
+          IMAGE_URI=${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          echo "Running container from image: $IMAGE_URI"
+
+          # Stop and remove existing container if running
+          docker rm -f texts || true
+
+          docker run -d -p 8080:8080 --name texts \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION=${{ secrets.AWS_REGION }} \
-            ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+            $IMAGE_URI
 
+      - name: Verify Deployment Health
+        run: |
+          echo "Checking if service is up..."
+          sleep 10
+          curl -f http://localhost:8080 || (echo "App failed to start!" && exit 1)
 
       - name: Clean Up Unused Images/Containers
         run: |
