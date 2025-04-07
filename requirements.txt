@@ -5,6 +5,7 @@ sacrebleu
 rouge_score
 py7zr
 pandas
+fastapi
 nltk
 tqdm
 PyYAML
@@ -12,6 +13,7 @@ matplotlib
 torch
 notebook
 boto3
+python-box
 mypy-boto3-s3
 python-box==6.0.2
 accelerate==0.26.0

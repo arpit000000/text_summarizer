@@ -11,6 +11,15 @@ class ModelTrainer:
         self.config = config
     
     def train(self):
+        model_dir = os.path.join(self.config.root_dir, "pegasus-samsum-model")
+        tokenizer_dir = os.path.join(self.config.root_dir, "tokenizer")
+
+        if os.path.exists(model_dir) and os.path.exists(tokenizer_dir):
+            print("✅ Model and tokenizer already trained and saved. Skipping training.")
+            return
+
+        print("🚀 Starting training...")
+        
         device = "cuda" if torch.cuda.is_available() else "cpu"
         tokenizer = AutoTokenizer.from_pretrained(self.config.model_ckpt)
         model_pegasus = AutoModelForSeq2SeqLM.from_pretrained(self.config.model_ckpt).to(device)
